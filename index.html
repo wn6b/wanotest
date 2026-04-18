@@ -1,665 +1,348 @@
-// ===== STATE (LocalStorage System) =====
-// هنا لغينا الفايربيس وصار الاعتماد على ذاكرة المتصفح
-let currentUser = JSON.parse(localStorage.getItem('wano_user')) || null;
-let userBots = JSON.parse(localStorage.getItem('wano_bots')) || [];
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WanoHost — استضافة بوتات احترافية مجانية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
 
-// ===== CURSOR GLOW =====
-const cursorGlow = document.getElementById('cursorGlow');
-document.addEventListener('mousemove', e => {
-  cursorGlow.style.left = e.clientX + 'px';
-  cursorGlow.style.top = e.clientY + 'px';
-});
-document.addEventListener('mousedown', () => {
-  cursorGlow.style.width = '18px';
-  cursorGlow.style.height = '18px';
-});
-document.addEventListener('mouseup', () => {
-  cursorGlow.style.width = '28px';
-  cursorGlow.style.height = '28px';
-});
+  <div class="cursor-glow" id="cursorGlow"></div>
 
-// ===== PARTICLE CANVAS =====
-const canvas = document.getElementById('particleCanvas');
-const ctx = canvas.getContext('2d');
-let particles = [];
+  <canvas id="particleCanvas"></canvas>
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-class Particle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.size = Math.random() * 1.5 + 0.3;
-    this.speedX = (Math.random() - 0.5) * 0.4;
-    this.speedY = (Math.random() - 0.5) * 0.4;
-    this.opacity = Math.random() * 0.4 + 0.1;
-    const colors = ['rgba(0,212,255,', 'rgba(181,107,255,', 'rgba(0,255,136,'];
-    this.color = colors[Math.floor(Math.random() * colors.length)];
-  }
-  update() {
-    this.x += this.speedX;
-    this.y += this.speedY;
-    if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-  }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fillStyle = this.color + this.opacity + ')';
-    ctx.fill();
-  }
-}
-
-for (let i = 0; i < 80; i++) particles.push(new Particle());
-
-function animateParticles() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach(p => { p.update(); p.draw(); });
-  requestAnimationFrame(animateParticles);
-}
-animateParticles();
-
-// ===== NAVBAR SCROLL =====
-const navbar = document.getElementById('navbar');
-window.addEventListener('scroll', () => {
-  navbar.classList.toggle('scrolled', window.scrollY > 20);
-});
-
-// ===== HAMBURGER =====
-const hamburger = document.getElementById('hamburger');
-const mobileMenu = document.getElementById('mobileMenu');
-hamburger.addEventListener('click', () => {
-  mobileMenu.classList.toggle('open');
-});
-
-// ===== COUNTER ANIMATION =====
-function animateCounter(el, target) {
-  let current = 0;
-  const step = target / 80;
-  const timer = setInterval(() => {
-    current = Math.min(current + step, target);
-    el.textContent = Math.floor(current).toLocaleString('ar');
-    if (current >= target) clearInterval(timer);
-  }, 20);
-}
-
-const statNums = document.querySelectorAll('.stat-num[data-target]');
-const statsObserver = new IntersectionObserver(entries => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const el = entry.target;
-      animateCounter(el, parseInt(el.dataset.target));
-      statsObserver.unobserve(el);
-    }
-  });
-}, { threshold: 0.5 });
-statNums.forEach(el => statsObserver.observe(el));
-
-// ===== PERFORMANCE BARS ANIMATION =====
-function animateBars() {
-  const cpuBar = document.querySelector('.cpu-bar');
-  const ramBar = document.querySelector('.ram-bar');
-  const cpuVal = document.getElementById('cpuVal');
-  const ramVal = document.getElementById('ramVal');
-
-  function updateBars() {
-    const cpu = 35 + Math.random() * 30;
-    const ram = 40 + Math.random() * 35;
-    if (cpuBar) { cpuBar.style.width = cpu + '%'; }
-    if (cpuVal) cpuVal.textContent = Math.round(cpu);
-    if (ramBar) ramBar.style.width = ram + '%';
-    if (ramVal) ramVal.textContent = Math.round(ram);
-  }
-
-  const barsObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        updateBars();
-        setInterval(updateBars, 3000);
-        barsObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.3 });
-
-  const featuresSection = document.querySelector('.features');
-  if (featuresSection) barsObserver.observe(featuresSection);
-}
-animateBars();
-
-// ===== TERMINAL ANIMATION =====
-const terminalLines = [
-  { type: 'cmd', text: 'wano deploy --project index.js' },
-  { type: 'output', text: '<i class="fa-solid fa-box-open"></i> تحليل مساحة العمل...' },
-  { type: 'output', text: '<i class="fa-solid fa-microchip"></i> فحص الموارد (Localhost)... ' },
-  { type: 'success', text: '<i class="fa-solid fa-check"></i> الكود آمن — لا مخالفات' },
-  { type: 'output', text: '<i class="fa-solid fa-server"></i> جاري تهيئة السيرفر المحلي...' },
-  { type: 'output', text: '<i class="fa-brands fa-node-js"></i> إعداد بيئة JavaScript...' },
-  { type: 'success', text: '<i class="fa-solid fa-check-double"></i> index.js يعمل الآن على المنفذ 3000' },
-  { type: 'output', text: '<i class="fa-solid fa-memory"></i> CPU: 12% | RAM: 128MB' },
-  { type: 'output', text: '<i class="fa-solid fa-fingerprint"></i> Host ID: wn-localhost-1' },
-  { type: 'success', text: '<i class="fa-solid fa-rocket"></i> تم إنشاء الهوست بنجاح! وقت التشغيل: 24/7' },
-];
-
-const terminalBody = document.getElementById('terminalBody');
-let terminalIdx = 1;
-let terminalRunning = false;
-
-function addTerminalLine(line, delay) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const div = document.createElement('div');
-      if (line.type === 'cmd') {
-        div.className = 't-line';
-        div.innerHTML = `<span class="t-prompt">root@localhost:~$</span><span class="t-cmd"> ${line.text}</span>`;
-      } else {
-        div.className = `t-line t-output t-${line.type}`;
-        div.innerHTML = line.text;
-      }
-      terminalBody.appendChild(div);
-      terminalBody.scrollTop = terminalBody.scrollHeight;
-      resolve();
-    }, delay);
-  });
-}
-
-async function runTerminal() {
-  if (terminalRunning) return;
-  terminalRunning = true;
-  terminalBody.innerHTML = '';
-  const cursor = document.createElement('span');
-  cursor.className = 't-cursor';
-
-  for (let i = 0; i < terminalLines.length; i++) {
-    await addTerminalLine(terminalLines[i], i === 0 ? 200 : 600 + Math.random() * 400);
-  }
-
-  const lastLine = terminalBody.lastChild;
-  if (lastLine) lastLine.appendChild(cursor);
-
-  setTimeout(() => {
-    terminalRunning = false;
-    setTimeout(runTerminal, 3000);
-  }, 4000);
-}
-
-const heroObserver = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) runTerminal(); });
-}, { threshold: 0.3 });
-heroObserver.observe(document.getElementById('hero'));
-
-// ===== SCROLL FADE-IN =====
-document.querySelectorAll('.feature-card, .plan-card, .rule-card, .section-header').forEach(el => {
-  el.classList.add('fade-in');
-});
-
-const fadeObserver = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-
-document.querySelectorAll('.fade-in').forEach(el => fadeObserver.observe(el));
-
-// ===== STATUS SECTION =====
-const statusServices = [
-  { name: 'شبكة Wano (Localhost)', desc: 'مستقرة 100%', status: 'green', badge: 'ok', label: 'متصل' },
-  { name: 'خوادم Discord API', desc: 'مناطق: US, EU', status: 'green', badge: 'ok', label: 'متصل' },
-  { name: 'خوادم Baileys (WA)', desc: 'اتصال WebSocket', status: 'green', badge: 'ok', label: 'متصل' },
-  { name: 'لوحة التحكم', desc: 'Web Dashboard', status: 'green', badge: 'ok', label: 'يعمل' },
-  { name: 'نظام المراقبة', desc: 'PM2 Auto-scan', status: 'green', badge: 'ok', label: 'نشط' },
-  { name: 'قاعدة البيانات (Local)', desc: 'Browser Storage', status: 'green', badge: 'ok', label: 'متصل' },
-];
-
-function renderStatus() {
-  const grid = document.getElementById('statusGrid');
-  if (!grid) return;
-  grid.innerHTML = statusServices.map(s => `
-    <div class="status-item">
-      <span class="status-dot ${s.status}"></span>
-      <div class="status-info">
-        <div class="status-name">${s.name}</div>
-        <div class="status-desc">${s.desc}</div>
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <div class="logo">
+        <span class="logo-icon"><i class="fa-solid fa-hexagon-nodes"></i></span>
+        <span class="logo-text">Wano<span class="logo-accent">Host</span></span>
       </div>
-      <span class="status-badge ${s.badge}">${s.label}</span>
+      <div class="nav-links">
+        <a href="#plans">الخطط المجانية</a>
+        <a href="#features">المميزات</a>
+        <a href="#rules">القوانين</a>
+        <a href="#status">حالة السيرفرات</a>
+        <a href="#bots">لوحة التحكم</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn-ghost" id="loginBtn">تسجيل الدخول</button>
+        <button class="btn-primary" id="registerBtn"><i class="fa-solid fa-rocket"></i> ابدأ مجاناً</button>
+      </div>
+      <button class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-  `).join('');
-}
-renderStatus();
-
-function renderUptimeBars() {
-  const bars = document.getElementById('uptimeBars');
-  if (!bars) return;
-  const data = Array.from({ length: 30 }, (_, i) => {
-    const r = Math.random();
-    if (i === 7) return 'yellow';
-    if (r > 0.98) return 'yellow';
-    return 'green';
-  });
-  bars.innerHTML = data.map(c => {
-    const h = c === 'green' ? 100 : 60;
-    return `<div class="uptime-bar ${c}" style="height:${h}%" title="${c === 'green' ? '100%' : 'ضغط شبكة'}"></div>`;
-  }).join('');
-}
-renderUptimeBars();
-
-// ===== TOAST =====
-function showToast(msg, type = 'info') {
-  let toast = document.getElementById('toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'toast';
-    toast.className = 'toast';
-    document.body.appendChild(toast);
-  }
-  toast.innerHTML = msg;
-  toast.className = `toast ${type} show`;
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => toast.classList.remove('show'), 3200);
-}
-
-// ===== AUTH MODAL =====
-const authModal = document.getElementById('authModal');
-const deployModal = document.getElementById('deployModal');
-
-function openAuthModal() {
-  authModal.classList.add('open');
-  document.getElementById('loginEmail').value = '';
-  document.getElementById('loginPassword').value = '';
-  document.getElementById('loginMsg').innerHTML = '';
-}
-function closeAuthModal() { authModal.classList.remove('open'); }
-function openDeployModal() { deployModal.classList.add('open'); }
-function closeDeployModal() { deployModal.classList.remove('open'); }
-
-document.getElementById('loginBtn').addEventListener('click', openAuthModal);
-document.getElementById('registerBtn').addEventListener('click', () => {
-  openAuthModal();
-  switchTab('register');
-});
-document.getElementById('loginBtnM').addEventListener('click', openAuthModal);
-document.getElementById('registerBtnM').addEventListener('click', () => { openAuthModal(); switchTab('register'); });
-document.getElementById('startFree').addEventListener('click', () => { openAuthModal(); switchTab('register'); });
-document.getElementById('watchDemo').addEventListener('click', () => {
-  document.getElementById('hero').scrollIntoView({ behavior: 'smooth' });
-  showToast('<i class="fa-solid fa-play"></i> انظر إلى سيرفر العرض أدناه', 'info');
-});
-document.getElementById('modalClose').addEventListener('click', closeAuthModal);
-document.getElementById('deployClose').addEventListener('click', closeDeployModal);
-
-authModal.addEventListener('click', e => { if (e.target === authModal) closeAuthModal(); });
-deployModal.addEventListener('click', e => { if (e.target === deployModal) closeDeployModal(); });
-
-function switchTab(tab) {
-  const isLogin = tab === 'login';
-  document.getElementById('tabLogin').classList.toggle('active', isLogin);
-  document.getElementById('tabRegister').classList.toggle('active', !isLogin);
-  document.getElementById('formLogin').classList.toggle('hidden', !isLogin);
-  document.getElementById('formRegister').classList.toggle('hidden', isLogin);
-}
-document.getElementById('tabLogin').addEventListener('click', () => switchTab('login'));
-document.getElementById('tabRegister').addEventListener('click', () => switchTab('register'));
-
-// ===== LOCAL AUTH SYSTEM =====
-document.getElementById('submitRegister').addEventListener('click', () => {
-  const username = document.getElementById('regUsername').value.trim();
-  const email = document.getElementById('regEmail').value.trim();
-  const password = document.getElementById('regPassword').value;
-  const msg = document.getElementById('registerMsg');
-
-  if (!username || !email || !password) {
-    msg.className = 'form-msg error';
-    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> يرجى تعبئة جميع الحقول';
-    return;
-  }
-  if (password.length < 8) {
-    msg.className = 'form-msg error';
-    msg.innerHTML = '<i class="fa-solid fa-shield-halved"></i> كلمة المرور يجب أن تكون 8 أحرف على الأقل';
-    return;
-  }
-
-  const btn = document.getElementById('submitRegister');
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري إنشاء الحساب...';
-  btn.disabled = true;
-
-  setTimeout(() => {
-    // حفظ المستخدم بالمحلي
-    const newUser = { username, email, password, joinedAt: Date.now() };
-    localStorage.setItem('wano_user', JSON.stringify(newUser));
-    localStorage.setItem('wano_bots', JSON.stringify([])); // تصفير البوتات للحساب الجديد
-    
-    currentUser = newUser;
-    userBots = [];
-
-    msg.className = 'form-msg success';
-    msg.innerHTML = '<i class="fa-solid fa-check"></i> تم إنشاء الحساب بنجاح!';
-    
-    setTimeout(() => {
-      closeAuthModal();
-      updateAuthState();
-    }, 800);
-    
-    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> إنشاء الحساب';
-    btn.disabled = false;
-  }, 800);
-});
-
-document.getElementById('submitLogin').addEventListener('click', () => {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const msg = document.getElementById('loginMsg');
-
-  if (!email || !password) {
-    msg.className = 'form-msg error';
-    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> يرجى تعبئة جميع الحقول';
-    return;
-  }
-
-  const btn = document.getElementById('submitLogin');
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري المصادقة...';
-  btn.disabled = true;
-
-  setTimeout(() => {
-    const savedUser = JSON.parse(localStorage.getItem('wano_user'));
-    
-    if (savedUser && savedUser.email === email && savedUser.password === password) {
-      currentUser = savedUser;
-      userBots = JSON.parse(localStorage.getItem('wano_bots')) || [];
-      
-      msg.className = 'form-msg success';
-      msg.innerHTML = '<i class="fa-solid fa-check-double"></i> تمت المصادقة بنجاح!';
-      setTimeout(() => {
-        closeAuthModal();
-        updateAuthState();
-      }, 800);
-    } else {
-      msg.className = 'form-msg error';
-      msg.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> البريد أو كلمة المرور غير صحيحة';
-    }
-    
-    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول إلى اللوحة';
-    btn.disabled = false;
-  }, 800);
-});
-
-// ===== STATE UI UPDATER =====
-function updateAuthState() {
-  if (currentUser) {
-    updateNavForUser(currentUser);
-    renderDashboard(currentUser);
-  } else {
-    resetNavForGuest();
-    showLoginPrompt();
-  }
-}
-
-function updateNavForUser(user) {
-  const actions = document.querySelector('.nav-actions');
-  if (!actions) return;
-  actions.innerHTML = `
-    <span style="color:var(--text-muted);font-size:0.88rem">مرحباً، <strong style="color:var(--text)">${user.username || user.email.split('@')[0]}</strong></span>
-    <button class="btn-primary" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
-  `;
-  document.getElementById('logoutBtn').addEventListener('click', () => {
-    currentUser = null;
-    userBots = [];
-    updateAuthState();
-    showToast('<i class="fa-solid fa-info-circle"></i> تم إنهاء الجلسة', 'info');
-  });
-}
-
-function resetNavForGuest() {
-  const actions = document.querySelector('.nav-actions');
-  if (!actions) return;
-  actions.innerHTML = `
-    <button class="btn-ghost" id="loginBtn">تسجيل الدخول</button>
-    <button class="btn-primary" id="registerBtn"><i class="fa-solid fa-rocket"></i> ابدأ مجاناً</button>
-  `;
-  document.getElementById('loginBtn').addEventListener('click', openAuthModal);
-  document.getElementById('registerBtn').addEventListener('click', () => { openAuthModal(); switchTab('register'); });
-}
-
-function showLoginPrompt() {
-  const container = document.getElementById('botsContainer');
-  if (!container) return;
-  container.innerHTML = `
-    <div class="login-prompt" id="loginPrompt">
-      <div class="login-prompt-icon"><i class="fa-solid fa-terminal"></i></div>
-      <h3>سجّل دخول لإدارة مساحة العمل</h3>
-      <p>بيئة استضافة مجانية ومستقرة لمشاريع JavaScript</p>
-      <button class="btn-primary" id="loginPromptBtn"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول / إنشاء حساب</button>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#plans">الخطط المجانية</a>
+      <a href="#features">المميزات</a>
+      <a href="#rules">القوانين</a>
+      <a href="#status">حالة السيرفرات</a>
+      <a href="#bots">لوحة التحكم</a>
+      <button class="btn-ghost" id="loginBtnM">تسجيل الدخول</button>
+      <button class="btn-primary" id="registerBtnM">ابدأ مجاناً</button>
     </div>
-  `;
-  document.getElementById('loginPromptBtn').addEventListener('click', openAuthModal);
-}
+  </nav>
 
-function renderDashboard(user) {
-  const container = document.getElementById('botsContainer');
-  if (!container) return;
-
-  const platformIcons = {
-    discord: '<i class="fa-brands fa-discord"></i>', 
-    telegram: '<i class="fa-brands fa-telegram"></i>', 
-    whatsapp: '<i class="fa-brands fa-whatsapp"></i>',
-    slack: '<i class="fa-brands fa-slack"></i>', 
-    twitter: '<i class="fa-brands fa-x-twitter"></i>', 
-    custom: '<i class="fa-solid fa-code"></i>'
-  };
-
-  const botsHtml = userBots.length === 0
-    ? `<div class="login-prompt" style="border-style:dashed">
-        <div class="login-prompt-icon"><i class="fa-solid fa-server"></i></div>
-        <h3>لا توجد مشاريع مرفوعة بعد</h3>
-        <p>قم بإنشاء هوست جديد لرفع كود الـ JS الخاص بك</p>
-        <button class="btn-primary" id="addFirstBot"><i class="fa-solid fa-plus"></i> إنشاء هوست</button>
-      </div>`
-    : `<div class="bots-list">
-        ${userBots.map(bot => `
-          <div class="bot-card" data-id="${bot.id}">
-            <div class="bot-icon ${bot.platform || 'discord'}">${platformIcons[bot.platform] || '<i class="fa-solid fa-robot"></i>'}</div>
-            <div class="bot-info">
-              <div class="bot-name">${bot.name}</div>
-              <div class="bot-meta">
-                <span class="bot-stat"><i class="fa-solid fa-globe"></i> ${bot.platform || 'discord'}</span>
-                <span class="bot-stat"><i class="fa-brands fa-node-js"></i> ${bot.lang || 'Node.js'}</span>
-                <span class="bot-stat"><i class="fa-solid fa-calendar-days"></i> ${new Date(bot.createdAt || Date.now()).toLocaleDateString('ar')}</span>
-              </div>
-            </div>
-            ${bot.running !== false
-              ? `<span class="running-badge"><span class="pulse-dot"></span>متصل (Online)</span>`
-              : `<span class="stopped-badge"><i class="fa-solid fa-circle-pause"></i> متوقف</span>`}
-            <div class="bot-actions">
-              <button class="bot-btn restart" data-id="${bot.id}" data-action="restart"><i class="fa-solid fa-rotate-right"></i> إعادة</button>
-              <button class="bot-btn stop" data-id="${bot.id}" data-action="${bot.running !== false ? 'stop' : 'start'}">${bot.running !== false ? '<i class="fa-solid fa-stop"></i> إيقاف' : '<i class="fa-solid fa-play"></i> تشغيل'}</button>
-              <button class="bot-btn delete" data-id="${bot.id}" data-action="delete"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>
-        `).join('')}
-      </div>`;
-
-  container.innerHTML = `
-    <div class="dashboard-header">
-      <div class="user-info">
-        <div class="user-avatar">${(user.username || user.email)[0].toUpperCase()}</div>
-        <div>
-          <div class="user-name">${user.username || user.email.split('@')[0]}</div>
-          <div class="user-plan"><i class="fa-solid fa-bolt" style="color: var(--neon-blue);"></i> استضافة مجانية — ${userBots.length} مساحة مستخدمة</div>
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="grid-overlay"></div>
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="orb orb3"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        <span>الخوادم تعمل بنسبة 100% — استضافة مجانية 2026</span>
+      </div>
+      <h1 class="hero-title">
+        استضافة بوتات<br/>
+        <span class="gradient-text">بأداء حقيقي</span>
+      </h1>
+      <p class="hero-sub">
+        استضف بوتاتك على Discord، Telegram، و WhatsApp (Baileys) بأداء خارق وأمان تام ومجاناً بالكامل.
+        سيرفرات مخصصة لبيئة JavaScript (Node.js) لضمان الاستقرار.
+      </p>
+      <div class="hero-btns">
+        <button class="btn-primary btn-lg" id="startFree">إنشاء الهوست <i class="fa-solid fa-arrow-left"></i></button>
+        <button class="btn-outline btn-lg" id="watchDemo">
+          <span class="play-icon"><i class="fa-solid fa-play"></i></span> شاهد العرض التجريبي
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-num" data-target="12400">0</span>
+          <span class="stat-label">بوت نشط الآن</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" data-target="100">0</span><span class="stat-suffix">%</span>
+          <span class="stat-label">وقت التشغيل Uptime</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" data-target="4300">0</span>
+          <span class="stat-label">مطور يثق بنا</span>
         </div>
       </div>
-      <div class="dashboard-actions">
-        <button class="btn-primary" id="addBotBtn"><i class="fa-solid fa-plus"></i> إنشاء هوست جديد</button>
-        <button class="btn-ghost" id="logoutDash"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
+    </div>
+    <div class="hero-terminal">
+      <div class="terminal-header">
+        <span class="t-dot red"></span>
+        <span class="t-dot yellow"></span>
+        <span class="t-dot green"></span>
+        <span class="t-title">wanohost ~ local-deploy</span>
+      </div>
+      <div class="terminal-body" id="terminalBody">
+        <div class="t-line"><span class="t-prompt">root@localhost:~$</span> <span class="t-cmd">wano deploy --bot index.js</span></div>
       </div>
     </div>
-    ${botsHtml}
-  `;
+  </section>
 
-  document.getElementById('addBotBtn')?.addEventListener('click', openDeployModal);
-  document.getElementById('addFirstBot')?.addEventListener('click', openDeployModal);
-  document.getElementById('logoutDash')?.addEventListener('click', () => {
-    currentUser = null;
-    userBots = [];
-    updateAuthState();
-    showToast('<i class="fa-solid fa-info-circle"></i> تم إنهاء الجلسة', 'info');
-  });
+  <section class="features" id="features">
+    <div class="section-header">
+      <span class="section-tag">البنية التحتية</span>
+      <h2>كل شي تحتاجه في مكان واحد مجاناً</h2>
+      <p>بنية تحتية متطورة نقدمها لمجتمع المطورين بدون أي تكاليف</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card card-wide">
+        <div class="feature-icon neon-blue"><i class="fa-solid fa-microchip"></i></div>
+        <h3>أداء خارق السرعة</h3>
+        <p>سيرفرات NVMe SSD مع معالجات مخصصة. أقصى حد CPU 100%، وموارد RAM مفتوحة لتناسب استهلاك الـ JS.</p>
+        <div class="feature-bar">
+          <div class="bar-fill cpu-bar"></div>
+          <span>CPU Usage: <span id="cpuVal">0</span>%</span>
+        </div>
+        <div class="feature-bar">
+          <div class="bar-fill ram-bar"></div>
+          <span>RAM Usage: <span id="ramVal">0</span>%</span>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon neon-green"><i class="fa-solid fa-shield-halved"></i></div>
+        <h3>حماية متقدمة للشبكات</h3>
+        <p>نظام حماية L7/L4 داخلي وخارجي. خوادمك آمنة من أي هجمات خبيثة أو DDoS.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon neon-purple"><i class="fa-solid fa-robot"></i></div>
+        <h3>نظام فلترة ذكي</h3>
+        <p>خوارزميات مخصصة تراقب العمليات لتجنب استهلاك الموارد المفرط وإيقاف البوتات المخالفة تلقائياً.</p>
+        <div class="ai-scanner">
+          <div class="scanner-line"></div>
+          <div class="scan-item safe"><i class="fa-solid fa-check"></i> index.js — مستقر</div>
+          <div class="scan-item safe"><i class="fa-solid fa-check"></i> app.js — مستقر</div>
+          <div class="scan-item danger"><i class="fa-solid fa-xmark"></i> ddos.js — تم الإيقاف!</div>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon neon-orange"><i class="fa-solid fa-chart-line"></i></div>
+        <h3>لوحة تحكم حية</h3>
+        <p>راقب استهلاك المعالج والذاكرة في الوقت الفعلي عبر واجهة مستخدم متطورة.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon neon-blue"><i class="fa-solid fa-rotate-right"></i></div>
+        <h3>إعادة تشغيل تلقائية</h3>
+        <p>PM2 مدمج. البوت يعيد تشغيل نفسه فوراً عند حدوث أي خطأ في الكود لضمان الاستمرارية 24/7.</p>
+      </div>
+      <div class="feature-card card-wide">
+        <div class="feature-icon neon-green"><i class="fa-solid fa-network-wired"></i></div>
+        <h3>دعم جميع المنصات</h3>
+        <p>نظامنا مهيأ لدعم مكتبات JavaScript (مثل Discord.js و Baileys للواتساب) بأفضل أداء ممكن.</p>
+        <div class="platforms-grid">
+          <div class="platform-chip discord"><i class="fa-brands fa-discord"></i> Discord</div>
+          <div class="platform-chip telegram"><i class="fa-brands fa-telegram"></i> Telegram</div>
+          <div class="platform-chip whatsapp"><i class="fa-brands fa-whatsapp"></i> WhatsApp</div>
+          <div class="platform-chip slack"><i class="fa-brands fa-slack"></i> Slack</div>
+          <div class="platform-chip custom"><i class="fa-solid fa-code"></i> Custom API</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  container.querySelectorAll('[data-action]').forEach(btn => {
-    btn.addEventListener('click', () => handleBotAction(btn.dataset.id, btn.dataset.action));
-  });
-}
+  <section class="plans" id="plans">
+    <div class="section-header">
+      <span class="section-tag">الاستضافة المجانية</span>
+      <h2>موارد ضخمة، بدون أي تكاليف</h2>
+    </div>
+    <div class="plans-grid">
+      <div class="plan-card">
+        <div class="plan-badge free">أساسي</div>
+        <h3>Starter</h3>
+        <div class="plan-price"><span class="price-num">$0</span><span class="price-period">/مدى الحياة</span></div>
+        <ul class="plan-features">
+          <li><i class="fa-solid fa-check"></i> استضافة بوت واحد</li>
+          <li><i class="fa-solid fa-check"></i> 512MB RAM</li>
+          <li><i class="fa-solid fa-check"></i> تشغيل 24/7</li>
+          <li><i class="fa-solid fa-check"></i> دعم Node.js & JS</li>
+        </ul>
+        <button class="btn-outline plan-btn" onclick="selectPlan('free')">إنشاء الهوست</button>
+      </div>
+      <div class="plan-card popular">
+        <div class="plan-badge pro">الأكثر طلباً <i class="fa-solid fa-star"></i></div>
+        <h3>Advanced</h3>
+        <div class="plan-price"><span class="price-num">$0</span><span class="price-period">/مدى الحياة</span></div>
+        <ul class="plan-features">
+          <li><i class="fa-solid fa-check"></i> 5 مشاريع/بوتات</li>
+          <li><i class="fa-solid fa-check"></i> 4GB RAM</li>
+          <li><i class="fa-solid fa-check"></i> CPU 100%</li>
+          <li><i class="fa-solid fa-check"></i> بيئة Node.js مخصصة</li>
+        </ul>
+        <button class="btn-primary plan-btn" onclick="selectPlan('pro')">إنشاء الهوست</button>
+      </div>
+      <div class="plan-card">
+        <div class="plan-badge business">استوديوهات</div>
+        <h3>Studio Max</h3>
+        <div class="plan-price"><span class="price-num">$0</span><span class="price-period">/مدى الحياة</span></div>
+        <ul class="plan-features">
+          <li><i class="fa-solid fa-check"></i> مشاريع غير محدودة</li>
+          <li><i class="fa-solid fa-check"></i> 16GB RAM</li>
+          <li><i class="fa-solid fa-check"></i> معالج مخصص ثقيل</li>
+          <li><i class="fa-solid fa-check"></i> دعم Localhost & GitHub</li>
+        </ul>
+        <button class="btn-outline plan-btn" onclick="selectPlan('business')">إنشاء الهوست</button>
+      </div>
+    </div>
+  </section>
 
-function handleBotAction(botId, action) {
-  if (!currentUser) return;
-  const botIndex = userBots.findIndex(b => b.id === botId);
-  if (botIndex === -1) return;
+  <section class="rules" id="rules">
+    <div class="section-header">
+      <span class="section-tag neon-red">سياسات الاستخدام</span>
+      <h2>قوانين صارمة لبيئة احترافية</h2>
+    </div>
+    <div class="rules-grid">
+      <div class="rule-card banned">
+        <div class="rule-icon"><i class="fa-solid fa-user-slash"></i></div>
+        <h3>ممنوع — Discord Self-Bots</h3>
+        <p>يُمنع تشغيل حسابات بشرية كبوتات للديسكورد. <strong>الاستثناء:</strong> يُسمح بمشاريع WhatsApp Self-bots.</p>
+        <div class="rule-tag banned-tag">تصفية تلقائية</div>
+      </div>
+      <div class="rule-card banned">
+        <div class="rule-icon"><i class="fa-solid fa-ban"></i></div>
+        <h3>ممنوع — محتوى غير قانوني</h3>
+        <p>أي استضافة لمحتوى ينتهك القوانين تؤدي إلى <strong>إيقاف نهائي</strong> للمساحة.</p>
+        <div class="rule-tag banned-tag">PERMANENT BAN</div>
+      </div>
+      <div class="rule-card warning">
+        <div class="rule-icon"><i class="fa-solid fa-burst"></i></div>
+        <h3>ممنوع — Nuker & DDoS</h3>
+        <p>الأكواد المخصصة لتدمير السيرفرات محظورة كلياً داخل بيئة الاستضافة.</p>
+        <div class="rule-tag banned-tag">إيقاف فوري</div>
+      </div>
+    </div>
+  </section>
 
-  if (action === 'restart') {
-    showToast('<i class="fa-solid fa-rotate-right fa-spin"></i> جاري إعادة تشغيل السيرفر...', 'info');
-    userBots[botIndex].running = false;
-    renderDashboard(currentUser);
-    
-    setTimeout(() => {
-      userBots[botIndex].running = true;
-      localStorage.setItem('wano_bots', JSON.stringify(userBots));
-      showToast('<i class="fa-solid fa-check"></i> تم إعادة التشغيل بنجاح!', 'success');
-      renderDashboard(currentUser);
-    }, 1800);
+  <section class="status-section" id="status">
+    <div class="section-header">
+      <span class="section-tag neon-green">حالة النظام</span>
+      <h2>أداء الخوادم المباشر</h2>
+    </div>
+    <div class="status-grid" id="statusGrid"></div>
+    <div class="uptime-chart">
+      <h3>معدل استقرار الشبكة — آخر 30 يوم</h3>
+      <div class="uptime-bars" id="uptimeBars"></div>
+    </div>
+  </section>
 
-  } else if (action === 'stop') {
-    userBots[botIndex].running = false;
-    localStorage.setItem('wano_bots', JSON.stringify(userBots));
-    showToast('<i class="fa-solid fa-stop"></i> تم إيقاف عملية الـ Node.js', 'info');
-    renderDashboard(currentUser);
+  <section class="my-bots" id="bots">
+    <div class="section-header">
+      <span class="section-tag">مساحة العمل</span>
+      <h2>إدارة المشاريع (Bots)</h2>
+    </div>
+    <div class="bots-container" id="botsContainer">
+      <div class="login-prompt" id="loginPrompt">
+        <div class="login-prompt-icon"><i class="fa-solid fa-terminal"></i></div>
+        <h3>سجّل دخول لإدارة مشاريعك</h3>
+        <button class="btn-primary" id="loginPromptBtn"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول / إنشاء حساب</button>
+      </div>
+    </div>
+  </section>
 
-  } else if (action === 'start') {
-    userBots[botIndex].running = true;
-    localStorage.setItem('wano_bots', JSON.stringify(userBots));
-    showToast('<i class="fa-solid fa-play"></i> تم تشغيل المشروع!', 'success');
-    renderDashboard(currentUser);
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="logo-icon"><i class="fa-solid fa-hexagon-nodes"></i></span>
+        <span class="logo-text">Wano<span class="logo-accent">Host</span></span>
+        <p>بنية تحتية متطورة لاستضافة بيئات JavaScript مجاناً بالكامل.</p>
+        <div class="footer-social">
+          <a href="#" target="_blank"><i class="fa-brands fa-discord"></i> Discord</a>
+          <a href="https://github.com/wn6b" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+        </div>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>الخدمات</h4>
+          <a href="#">الاستضافة المجانية</a>
+          <a href="#">حالة السيرفرات</a>
+        </div>
+        <div class="footer-col">
+          <h4>الدعم</h4>
+          <a href="#">مستندات المطورين</a>
+          <a href="#">تذكرة دعم</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 WanoHost — تم التطوير بواسطة Marwan | Wano</span>
+      <span class="footer-status"><span class="pulse-dot small"></span> جميع الأنظمة تعمل</span>
+    </div>
+  </footer>
 
-  } else if (action === 'delete') {
-    if (!confirm('هل أنت متأكد من حذف هذه المساحة بالكامل؟ لا يمكن التراجع.')) return;
-    userBots.splice(botIndex, 1);
-    localStorage.setItem('wano_bots', JSON.stringify(userBots));
-    showToast('<i class="fa-solid fa-trash"></i> تم حذف المشروع نهائياً', 'info');
-    renderDashboard(currentUser);
-  }
-}
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-box">
+      <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="tabLogin">تسجيل الدخول</button>
+        <button class="modal-tab" id="tabRegister">إنشاء حساب</button>
+      </div>
+      <div class="modal-form" id="formLogin">
+        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="loginEmail" placeholder="you@example.com" /></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="password" id="loginPassword" placeholder="••••••••" /></div>
+        <div class="form-msg" id="loginMsg"></div>
+        <button class="btn-primary form-submit" id="submitLogin">دخول إلى اللوحة</button>
+      </div>
+      <div class="modal-form hidden" id="formRegister">
+        <div class="form-group"><label>اسم المطور</label><input type="text" id="regUsername" placeholder="مثال: Wano" /></div>
+        <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="regEmail" placeholder="you@example.com" /></div>
+        <div class="form-group"><label>كلمة المرور</label><input type="password" id="regPassword" placeholder="8 أحرف على الأقل" /></div>
+        <div class="form-msg" id="registerMsg"></div>
+        <button class="btn-primary form-submit" id="submitRegister">إنشاء الحساب</button>
+      </div>
+    </div>
+  </div>
 
-// ===== DEPLOY BOT =====
-const BANNED_KEYWORDS = [
-  'selfbot', 'discord-self', 'nuker', 'nuke', 'raider', 'raid', 
-  'massdm', 'mass-dm', 'hosting-bot', 'hostbot', 'vpn-bot', 'proxy-bot'
-];
+  <div class="modal-overlay" id="deployModal">
+    <div class="modal-box deploy-box">
+      <button class="modal-close" id="deployClose"><i class="fa-solid fa-xmark"></i></button>
+      <h3><i class="fa-solid fa-server"></i> إنشاء هوست جديد</h3>
+      <div class="form-group"><label>معرف المشروع (Bot Name)</label><input type="text" id="botName" placeholder="WanoProject_1" /></div>
+      <div class="form-group">
+        <label>المنصة المستهدفة</label>
+        <select id="botPlatform">
+          <option value="discord">Discord API</option>
+          <option value="telegram">Telegram API</option>
+          <option value="whatsapp">WhatsApp (Baileys)</option>
+          <option value="custom">Custom Webhook</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>بيئة التشغيل (JavaScript حصراً)</label>
+        <select id="botLang">
+          <option value="nodejs">Node.js (v20.x)</option>
+          <option value="deno">Deno</option>
+          <option value="bun">Bun.js</option>
+        </select>
+      </div>
+      <div class="form-msg" id="deployMsg"></div>
+      <button class="btn-primary form-submit" id="submitDeploy"><i class="fa-solid fa-rocket"></i> بدء التنصيب والتشغيل</button>
+    </div>
+  </div>
 
-function aiBotNameCheck(name) {
-  const lower = name.toLowerCase();
-  return BANNED_KEYWORDS.some(k => lower.includes(k));
-}
-
-document.getElementById('submitDeploy').addEventListener('click', () => {
-  if (!currentUser) { openAuthModal(); return; }
-
-  const name = document.getElementById('botName').value.trim();
-  const platform = document.getElementById('botPlatform').value;
-  const lang = document.getElementById('botLang').value;
-  const msg = document.getElementById('deployMsg');
-
-  if (!name) {
-    msg.className = 'form-msg error';
-    msg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> يرجى إدخال اسم المشروع';
-    return;
-  }
-
-  if (aiBotNameCheck(name)) {
-    msg.className = 'form-msg error';
-    msg.innerHTML = '<i class="fa-solid fa-shield-halved"></i> جدار الحماية: اسم المشروع يحتوي على كلمات محظورة.';
-    showToast('<i class="fa-solid fa-ban"></i> جدار الحماية: تم رفض الإنشاء.', 'error');
-    return;
-  }
-
-  const btn = document.getElementById('submitDeploy');
-  btn.innerHTML = '<i class="fa-solid fa-microchip fa-fade"></i> جاري تخصيص الموارد...';
-  btn.disabled = true;
-  msg.className = 'form-msg';
-  msg.innerHTML = '';
-
-  setTimeout(() => {
-    btn.innerHTML = '<i class="fa-solid fa-rocket fa-bounce"></i> جاري الرفع...';
-    
-    setTimeout(() => {
-      const newBot = {
-        id: 'host_' + Date.now(),
-        name,
-        platform,
-        lang,
-        running: true,
-        createdAt: Date.now()
-      };
-
-      userBots.push(newBot);
-      localStorage.setItem('wano_bots', JSON.stringify(userBots));
-
-      msg.className = 'form-msg success';
-      msg.innerHTML = '<i class="fa-solid fa-check-double"></i> تم إعداد مساحة العمل بنجاح!';
-      showToast(`<i class="fa-solid fa-server"></i> الهوست ${name} يعمل الآن!`, 'success');
-
-      setTimeout(() => {
-        closeDeployModal();
-        document.getElementById('botName').value = '';
-        renderDashboard(currentUser);
-        document.getElementById('bots').scrollIntoView({ behavior: 'smooth' });
-      }, 1000);
-      
-      btn.innerHTML = '<i class="fa-solid fa-rocket"></i> بدء التنصيب والتشغيل';
-      btn.disabled = false;
-    }, 1000);
-  }, 800);
-});
-
-function selectPlan(plan) {
-  if (!currentUser) {
-    openAuthModal();
-    showToast('<i class="fa-solid fa-info-circle"></i> يرجى تسجيل الدخول أولاً لإنشاء الهوست', 'info');
-    return;
-  }
-  const labels = { free: 'Starter', pro: 'Advanced', business: 'Studio Max' };
-  showToast(`<i class="fa-solid fa-circle-check"></i> تم تخصيص مساحة العمل (${labels[plan]}) مجاناً لحسابك بنجاح!`, 'success');
-}
-window.selectPlan = selectPlan;
-
-document.querySelectorAll('.feature-card, .plan-card, .rule-card').forEach(card => {
-  card.addEventListener('mousemove', e => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    card.style.setProperty('--mx', x + 'px');
-    card.style.setProperty('--my', y + 'px');
-  });
-});
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    closeAuthModal();
-    closeDeployModal();
-  }
-});
-
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', e => {
-    e.preventDefault();
-    const target = document.querySelector(a.getAttribute('href'));
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
-      mobileMenu.classList.remove('open');
-    }
-  });
-});
-
-// Initialize on page load
-updateAuthState();
-
-console.log('%c WanoHost [Local Storage Env]', 'color:#00d4ff;font-size:24px;font-weight:bold');
-console.log('%c يعمل بدون قواعد بيانات (حفظ بالمتصفح)', 'color:#00ff88;font-size:14px');
+  <script src="script.js"></script>
+</body>
+</html>
