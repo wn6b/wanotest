@@ -1,107 +1,123 @@
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wano 3D Nature - 2026 Edition</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; font-family: sans-serif; }
+        canvas { display: block; }
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ff88;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
 
-// واجهة الموقع الوهمية بتصميم 2026 (Glassmorphism & Neon)
-app.get('/', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Quantum Core Server 2026</title>
-      <style>
-        :root {
-          --primary-glow: #00ffcc;
-          --bg-color: #050505;
-        }
-        body {
-          margin: 0;
-          padding: 0;
-          background-color: var(--bg-color);
-          background-image: radial-gradient(circle at 50% 50%, #112222 0%, #050505 100%);
-          color: #fff;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100vh;
-          overflow: hidden;
-        }
-        .glass-panel {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 20px;
-          padding: 40px;
-          text-align: center;
-          box-shadow: 0 0 40px rgba(0, 255, 204, 0.2);
-          position: relative;
-        }
-        .glass-panel::before {
-          content: '';
-          position: absolute;
-          top: -2px; left: -2px; right: -2px; bottom: -2px;
-          background: linear-gradient(45deg, transparent, var(--primary-glow), transparent);
-          z-index: -1;
-          border-radius: 22px;
-          animation: borderGlow 3s linear infinite;
-        }
-        h1 {
-          font-size: 2.5em;
-          margin-bottom: 10px;
-          text-transform: uppercase;
-          letter-spacing: 4px;
-          text-shadow: 0 0 10px var(--primary-glow);
-        }
-        .status {
-          font-size: 1.2em;
-          color: #aadddd;
-          margin-bottom: 20px;
-        }
-        .ping {
-          display: inline-block;
-          width: 12px;
-          height: 12px;
-          background-color: #00ffcc;
-          border-radius: 50%;
-          box-shadow: 0 0 10px #00ffcc;
-          animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-          0% { transform: scale(0.95); opacity: 0.5; }
-          50% { transform: scale(1.2); opacity: 1; }
-          100% { transform: scale(0.95); opacity: 0.5; }
-        }
-        @keyframes borderGlow {
-          0% { opacity: 0.3; }
-          50% { opacity: 0.8; }
-          100% { opacity: 0.3; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="glass-panel">
-        <h1>System Active</h1>
-        <div class="status">Quantum Server v4.2.0 is online</div>
-        <div>Network Status: <span class="ping"></span> Stable</div>
-        <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.6;">© 2026 Core Infrastructure</p>
-      </div>
-    </body>
-    </html>
-  `);
-});
+    <div id="ui-overlay">
+        <h1>Wano Studio - Project: Organic Text</h1>
+    </div>
 
-app.listen(port, () => {
-  console.log(`[WEB LAYER] Port ${port} is open. Stealth website running.`);
-});
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
 
-// تشغيل البوت من المجلد الخاص به
-try {
-  require('./bot/core.js');
-  console.log("[BOT LAYER] Bot injected and running secretly in the background.");
-} catch (error) {
-  console.log("[BOT LAYER ERROR] Please ensure ./bot/core.js exists. Error:", error.message);
-}
+    <script type="module">
+        import * as THREE from 'three';
+        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // إعداد المشهد
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // التحكم بالكاميرا
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(0, 0, 10);
+
+        // الإضاءة
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0x00ff88, 2);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        // تحميل الخط وصناعة الـ "أغصان"
+        const loader = new FontLoader();
+        // نستخدم خط Helvetiker المتوفر مع المكتبة
+        loader.load('https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json', (font) => {
+            const textGeo = new TextGeometry('WANO', {
+                font: font,
+                size: 3,
+                height: 0.5,
+                curveSegments: 12,
+                bevelEnabled: true,
+                bevelThickness: 0.1,
+                bevelSize: 0.1,
+                bevelOffset: 0,
+                bevelSegments: 5
+            });
+
+            textGeo.center();
+
+            // مادة "الأغصان" - Wireframe يعطي شكل التشابك
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x00ff88, 
+                wireframe: true, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+
+            const textMesh = new THREE.Mesh(textGeo, material);
+            scene.add(textMesh);
+
+            // إضافة تأثير الجزيئات المتطايرة كأنه غابة رقمية
+            const particlesGeo = new THREE.BufferGeometry();
+            const particlesCount = 500;
+            const posArray = new Float32Array(particlesCount * 3);
+
+            for(let i=0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 30;
+            }
+            particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particlesMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0x00ff88 });
+            const particlesMesh = new THREE.Points(particlesGeo, particlesMaterial);
+            scene.add(particlesMesh);
+
+            // التحريك
+            function animate() {
+                requestAnimationFrame(animate);
+                textMesh.rotation.y += 0.005;
+                particlesMesh.rotation.y -= 0.002;
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+        });
+
+        // استجابة لتغيير حجم الشاشة
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+</html>
