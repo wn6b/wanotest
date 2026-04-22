@@ -1,0 +1,26 @@
+/* css/global.css */
+:root {
+    --primary-glow: #00ffcc;
+    --danger-glow: #ff0055;
+    --bg-dark: #050507;
+    --glass-bg: rgba(15, 15, 20, 0.7);
+    --font-main: 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-dark);
+    background-image: radial-gradient(circle at top right, #112 0%, var(--bg-dark) 100%);
+    color: #ffffff;
+    font-family: var(--font-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
