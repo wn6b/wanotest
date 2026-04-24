@@ -1,129 +1,220 @@
-// --- إعدادات الحسابات والأنظمة ---
-// استخدام ID الرتبة مثل ما طلبت (role_1: Owner, role_2: Developer, role_3: User)
-const OWNER_CREDENTIALS = {
-    email: "waylalyzydy51@gmail.com",
-    password: "f!2HgJv#)\"E\"y^i",
-    roleId: "role_1", 
-    roleName: "Owner"
+/* ════════════════════════════════════════════
+   Projects Bots — script.js
+   by وائل | Wano (@wn6b)
+   ════════════════════════════════════════════ */
+
+'use strict';
+
+// ══════════════════════════════════
+// CONFIG — OWNER CREDENTIALS
+// ══════════════════════════════════
+const OWNER = {
+  email: 'waylalyzydy51@gmail.com',
+  password: 'f!2HgJv#)"E"y^i',
+  name: 'وائل | Wano',
+  username: 'wn6b',
+  role: 'owner'
 };
 
-// --- الوظائف الأساسية للـ UI ---
-const showScreen = (screenId) => {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
+const ANTHROPIC_MODEL = 'claude-sonnet-4-20250514';
+
+// ══════════════════════════════════
+// STORAGE HELPERS
+// ══════════════════════════════════
+const DB = {
+  get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  del: (k) => localStorage.removeItem(k)
 };
 
-const showPanel = (roleId) => {
-    document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
-    const targetPanel = document.getElementById(`panel-${roleId}`);
-    if (targetPanel) targetPanel.classList.remove('hidden');
-};
+// Ensure owner account always exists in users db
+function initOwner() {
+  let users = DB.get('pb_users') || [];
+  const exists = users.find(u => u.email === OWNER.email);
+  if (!exists) {
+    users.push({
+      email: OWNER.email,
+      password: OWNER.password,
+      name: OWNER.name,
+      username: OWNER.username,
+      role: 'owner',
+      createdAt: new Date().toISOString()
+    });
+    DB.set('pb_users', users);
+  }
+}
 
-// --- محاكاة شاشة التحميل الواقعية ---
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        checkAuthStatus();
-    }, 3500); // 3.5 ثواني عشان تبين واقعية وحلوة
-});
+// ══════════════════════════════════
+// LOADER
+// ══════════════════════════════════
+const LOADER_STEPS = [
+  'Initializing AI Core...',
+  'Loading Neural Networks...',
+  'Connecting to Cloud...',
+  'Authenticating Services...',
+  'Scanning Security Layers...',
+  'Syncing Project Database...',
+  'Calibrating AI Scanner...',
+  'Ready ✓'
+];
 
-// --- نظام تسجيل الدخول (مع حفظ البيانات بالـ localStorage) ---
-const checkAuthStatus = () => {
-    const activeUser = JSON.parse(localStorage.getItem('currentUser_wn6b'));
-    if (activeUser) {
-        setupDashboard(activeUser);
-        showScreen('dashboard-screen');
-    } else {
-        showScreen('auth-screen');
-    }
-};
+function startLoader() {
+  initOwner();
+  const bar = document.getElementById('loaderBar');
+  const status = document.getElementById('loaderStatus');
 
-document.getElementById('login-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const errorMsg = document.getElementById('auth-error');
-
-    // التحقق من حساب الأونر اللي طلبته
-    if (email === OWNER_CREDENTIALS.email && password === OWNER_CREDENTIALS.password) {
-        const userData = { email: email, roleId: OWNER_CREDENTIALS.roleId, roleName: OWNER_CREDENTIALS.roleName };
-        localStorage.setItem('currentUser_wn6b', JSON.stringify(userData));
-        setupDashboard(userData);
-        showScreen('dashboard-screen');
-        errorMsg.innerText = "";
-    } 
-    // أي حساب ثاني يعتبر مستخدم عادي (Demo)
-    else if (email && password.length > 5) {
-        const userData = { email: email, roleId: "role_3", roleName: "User" };
-        localStorage.setItem('currentUser_wn6b', JSON.stringify(userData));
-        setupDashboard(userData);
-        showScreen('dashboard-screen');
-        errorMsg.innerText = "";
-    } else {
-        errorMsg.innerText = "بيانات الدخول غير صحيحة!";
-    }
-});
-
-// --- إعداد لوحة التحكم بناءً على الرتبة (ID) ---
-const setupDashboard = (user) => {
-    const badge = document.getElementById('user-role-badge');
-    badge.innerHTML = `<i class="fa-solid fa-id-badge"></i> ${user.roleName}`;
-    showPanel(user.roleId);
-};
-
-// --- تسجيل الخروج ---
-document.getElementById('logout-btn').addEventListener('click', () => {
-    localStorage.removeItem('currentUser_wn6b');
-    showScreen('loading-screen');
-    setTimeout(() => {
-        document.getElementById('login-form').reset();
-        showScreen('auth-screen');
-    }, 1000);
-});
-
-// --- محاكاة الذكاء الاصطناعي لفحص الملفات (للأونر) ---
-document.getElementById('owner-upload-btn').addEventListener('click', () => {
-    const fileInput = document.getElementById('owner-file-upload');
-    const statusDiv = document.getElementById('ai-scan-status');
-
-    if (!fileInput.files.length) {
-        alert("يا وائل اختار ملف أول شي لا تفضحنا!");
-        return;
-    }
-
-    statusDiv.classList.remove('hidden', 'rejected', 'approved');
-    statusDiv.innerHTML = '<i class="fa-solid fa-microchip fa-spin"></i> الذكاء الاصطناعي يحلل الأكواد...';
-    
-    // محاكاة وقت الفحص
-    setTimeout(() => {
-        statusDiv.innerHTML = '<i class="fa-solid fa-shield-virus fa-spin"></i> جاري البحث عن ثغرات وفيروسات...';
-        
-        setTimeout(() => {
-            // بما انه الاونر، الملف دائماً ينجح، بس هاي الفكرة تتبرمج صح مع API لاحقاً
-            statusDiv.classList.add('approved');
-            statusDiv.innerHTML = '<i class="fa-solid fa-circle-check"></i> تم فحص الملف وهو آمن 100%! جاري النشر...';
-            
-            // اضافة كرت الملف للموقع (محاكاة)
-            setTimeout(() => {
-                const fileName = fileInput.files[0].name;
-                addFileCard(fileName, "الأونر");
-                fileInput.value = ""; // تفريغ الحقل
-                setTimeout(() => statusDiv.classList.add('hidden'), 3000);
-            }, 1000);
-
-        }, 2000);
-    }, 2000);
-});
-
-// دالة لاضافة كرت الملف في الواجهة
-const addFileCard = (fileName, author) => {
-    const container = document.getElementById('files-container');
-    const card = document.createElement('div');
-    card.className = 'file-card';
-    card.innerHTML = `
-        <i class="fa-solid fa-file-code file-icon"></i>
-        <h4>${fileName}</h4>
-        <p>بواسطة: ${author}</p>
-        <button class="btn-download" onclick="alert('جاري تنزيل ${fileName}...')"><i class="fa-solid fa-download"></i> تنزيل</button>
+  // particles
+  const pc = document.getElementById('loaderParticles');
+  for (let i = 0; i < 18; i++) {
+    const d = document.createElement('div');
+    d.className = 'lp-dot';
+    const size = Math.random() * 4 + 2;
+    d.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      animation-duration:${Math.random()*6+5}s;
+      animation-delay:${Math.random()*4}s;
+      opacity:0.6;
     `;
-    container.prepend(card);
-};
+    pc.appendChild(d);
+  }
+
+  let step = 0;
+  const total = LOADER_STEPS.length;
+  const interval = setInterval(() => {
+    if (step >= total) {
+      clearInterval(interval);
+      setTimeout(exitLoader, 400);
+      return;
+    }
+    const pct = Math.round(((step + 1) / total) * 100);
+    bar.style.width = pct + '%';
+    status.textContent = LOADER_STEPS[step];
+    step++;
+  }, 320);
+}
+
+function exitLoader() {
+  const loader = document.getElementById('loader');
+  loader.classList.add('exit');
+  setTimeout(() => {
+    loader.classList.add('hidden');
+    checkAutoLogin();
+  }, 600);
+}
+
+// ══════════════════════════════════
+// AUTO-LOGIN CHECK
+// ══════════════════════════════════
+function checkAutoLogin() {
+  const saved = DB.get('pb_session');
+  if (saved && saved.email) {
+    const users = DB.get('pb_users') || [];
+    const user = users.find(u => u.email === saved.email);
+    if (user) {
+      loginUser(user, false);
+      return;
+    }
+  }
+  showAuthScreen();
+}
+
+function showAuthScreen() {
+  document.getElementById('authScreen').classList.remove('hidden');
+  initAuthCanvas();
+  switchTab('login');
+}
+
+// ══════════════════════════════════
+// AUTH CANVAS BACKGROUND
+// ══════════════════════════════════
+function initAuthCanvas() {
+  const canvas = document.getElementById('authCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const nodes = Array.from({ length: 60 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4,
+    r: Math.random() * 2 + 1
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+      if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,212,255,0.5)';
+      ctx.fill();
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = `rgba(0,132,255,${0.15 * (1 - dist / 100)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+}
+
+// ══════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════
+function switchTab(tab) {
+  const loginTab = document.getElementById('tabLogin');
+  const regTab = document.getElementById('tabRegister');
+  const slider = document.getElementById('tabSlider');
+  const formLogin = document.getElementById('formLogin');
+  const formReg = document.getElementById('formRegister');
+
+  if (tab === 'login') {
+    loginTab.classList.add('active');
+    regTab.classList.remove('active');
+    formLogin.classList.add('active');
+    formReg.classList.remove('active');
+    // Slider position: RTL layout — "تسجيل الدخول" is left side (right side in RTL)
+    slider.style.right = '4px';
+    slider.style.left = '50%';
+    slider.style.width = 'calc(50% - 4px)';
+  } else {
+    regTab.classList.add('active');
+    loginTab.classList.remove('active');
+    formReg.classList.add('active');
+    formLogin.classList.remove('active');
+    slider.style.right = '50%';
+    slider.style.left = '4px';
+    slider.style.width = 'calc(50% - 4px)';
+  }
+}
+
+// Init slider on load
+document.addEventListener('DOMContentLoaded', () => {
+  const slider = document.getElementById('tabSlider');
+  if (slider) {
+    slider.style.right = '4px';
+    slider.style.left = '50%';
+    slider.style.width = 'calc(50% - 4px)';
+  }
+});
